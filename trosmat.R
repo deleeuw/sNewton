@@ -1,0 +1,7 @@
+trosmat <- as.dist(matrix(c(0,1,sqrt(2),1,1,0,1,sqrt(2),sqrt(2),1,0,1,1,sqrt(2),1,0),4,4))
+xstar <- matrix(c(-1,1,-1,1,-1,-1,1,1), 4, 2)
+dlmat <- 1 - diag(4)
+xtria <- torgerson(1 - diag(3), 2)
+xtria <- rbind(0, xtria)
+xsqua <- matrix(c(-1,1,1,-1,-1,-1,1,1),4,2)
+w <- 1 - diag(4)

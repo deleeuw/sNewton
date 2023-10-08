@@ -1,0 +1,12 @@
+countries <- c("Brazil",
+"Congo",
+"Cuba",
+"Egypt",
+"France",
+"India",
+"Israel",
+"Japan",
+"China", 
+"USSR", 
+"U.S.A.", 
+"Yugoslavia")
