@@ -28,14 +28,13 @@ abstract: We present theory, algorithms, and R code for a version of the **smaco
 suppressPackageStartupMessages(library(smacof, quietly = TRUE))
 suppressPackageStartupMessages(library(microbenchmark, quietly = TRUE))
 suppressPackageStartupMessages(library(MASS, quietly = TRUE))
+suppressPackageStartupMessages(library(zeallot, quietly = TRUE))
 ```
 
 ```{r load code, echo = FALSE}
 source("utils.R")
 source("basis.R")
-source("mSmacof.R")
-source("vSmacof.R")
-source("sSmacof.R")
+source("sNewton.R")
 source("exampleRun.R")
 ```
 
@@ -316,44 +315,6 @@ reprensenting uniquenesses. Thus there are $p+n>n$ dimensions, and $p+n$ matrice
 first $p$ are $n\times(n-1)$, the last $n$ are the one-dimensional vectors $e_i$. There are problems
 with this parametrization, very much like the factor indeterminacy problem, but the algorithm
 does not care and picks one of the solutions.
-
-## Matrix Basis
-
-An important special case of DCDD imposes the constraint
-\begin{equation}
-X=\sum_{v=1}^r\theta_vG_v,
-(\#eq:matbasis)
-\end{equation}
-where the $G_s$ are $n\times p$ matrices. To see that this is indeed a special case
-of DCDD define $Y_s$ as the matrix collecting the $s^{th}$ columns of all $G_v$. Thus
-there are $r$ of these $n\times r$ matrices $Y_s$. Now $\vec(X)=Y\theta$, with $Y$
-the direct sum of the $Y_s$, as usual, and 
-\begin{equation}
-\theta=\left.\begin{bmatrix}\theta\\\vdots\\\theta\end{bmatrix}\right\}r\ \text{times}.
-(\#eq:thetamat)
-\end{equation}
-The distinguishing DCDD characteristic in using the *matrix basis* \@ref(eq:matbasis) is that all $r$ pieces of $\theta$ in \@ref(eq:thetamat) must be equal.
-
-Better in configuration space
-
-No $V=I$
-
-One important application of the matrix basis is finding the optimal step size in
-iterative procedures, or, more generally, finding optimal weights in multistep
-procedures. For the steepest descent method, for example, we choose $G_1=X$
-and $G_2=\nabla\sigma(X)$. 
-
-$$
-\{C_{ij}\}_{vw}=\text{tr}\ G_v'A_{ij}G_w
-$$
-Thus
-$$
-\{V_s\}_{vw}=\text{tr}\ G_v'V_0G_w
-$$
-$$
-\{B_s(\theta)\}_{vw}=\text{tr}\ G_v'B_0(\theta)G_w
-$$
-$$\sigma(\theta):=\frac12\{1-2\theta'B(\theta)\theta+\theta'V\theta\}$$
 
 
 
@@ -768,19 +729,6 @@ may produce a non-monotone sequence of stress values, but it will tend to
 be much faster because with the default settings the percentage of **newton**
 iterations will be small.
 
-## Matrix Based
-
-$$
-X^{(k+1)}=\theta_1 X^{(k)}+\theta_2\Gamma(X^{(k)})+\theta_3\Gamma^2(X^{(k)})+\cdots+\theta_r\Gamma^{r-1}(X^{(k)})
-$$
-Problem: near a fixed point $B$ and $V$ become almost singular (of rank one)
-
-Chebyshev: $$\min_\theta\max_s|\theta_1+\theta_2\lambda_s+\cdots+\theta_r\lambda_s^{r-1}|$$
-
-Sidi
-
-Generalizes relax. 
-
 
 
 # Software
@@ -893,14 +841,6 @@ a Gower rank of $p$ is exceedingly rare, and the $p$ unit eigenvalues are usuall
 eigenvalues of $V^+B(\theta)$.
 
 
-## vSmacof
-
-vSmacof minimizes stress using the matrix basis
-
-## sSmacof
-
-In sSmacof we combine mSmacof and vSmacof steps.
-
 # Examples
 
 In this section we give the results of running *mSmacof*, with the various
@@ -977,22 +917,16 @@ mPrint(h$evlt, digits = 6)
 mPrint(h$evlx, digits = 6)
 ```
 
-#### Smacof Meets Newton
-
 ```{r mtdata, cache = TRUE}
 htrosmat <- exampleRun(trosmat)
 ```
 
+### Discussion
 ```{r mtresults, echo = FALSE}
 print(htrosmat$results, digits = 10)
 ```
 
-#### Smacof Quickstep
 
-```{r trosmatssmacof, cache = FALSE}
-hstrosmat <- exampleRun2(trosmat)
-print(hstrosmat$results, digits = 10)
-```
 
 ```{r trosmatplot, echo = FALSE}
 par(pty = "s", mfrow = c(1, 2))
@@ -1017,18 +951,11 @@ Note that we use power three to compute dissimilarities from the similarities, b
 
 ### Results
 
-#### Smacof Meets Newton
 
 ```{r ekmanresults}
 print(hekman$results, digits = 10)
 ```
 
-#### Smacof Quickstep
-
-```{r ekmanssmacof, cache = FALSE}
-hsekman <- exampleRun2(ekman)
-print(hsekman$results, digits = 10)
-```
 
 ### Discussion
 
@@ -1064,17 +991,9 @@ equally spaced on a circle and the remaining three points as corners of an equil
 
 ### Results 
 
-#### Smacof Meets Newton
 
 ```{r equiprint, echo = FALSE}
 print(hequi$results, digits = 12)
-```
-
-#### Smacof Quickstep
-
-```{r equissmacof, cache = FALSE, eval = FALSE}
-hsequi <- exampleRun2(equi)
-print(hsequi$results, digits = 10)
 ```
 
 ### Discussion
@@ -1094,7 +1013,7 @@ The final **smacof** configuration consists of eleven points equally spaced on a
 and four points in the corners of a square inside the circle. The final **smacofa**
 configuration is the presumed global minimum with twelve points on the circle and an equilateral triangle within the circle.
 
-```{r equiplot, echo = FALSE}
+```{r equiplot, echo = FALSE, eval = FALSE}
 par(pty = "s", mfrow = c(1, 2))
 plot(hequi$run[[1]]$xmat, type = "n", main = "smacof", xlab = "dim 1", ylab = "dim 2")
 text(hequi$run[[1]]$xmat, as.character(1:15))
@@ -1129,18 +1048,11 @@ hmorse <- exampleRun(morse)
 
 ### Results
 
-#### Smacof Meets Newton
 
 ```{r morseprint, echo = FALSE}
 print(hmorse$results, digits = 10)
 ```
 
-#### Smacof Quickstep
-
-```{r morse ssmacof, cache= FALSE, eval = FALSE}
-hsmorse <- exampleRun2(morse)
-print(hsmorse$results, digits = 10)
-```
 ### Discussion
 
 ## De Gruijter
@@ -1159,18 +1071,11 @@ hgruijter <- exampleRun(gruijter)
 
 ### Results
 
-#### Smacof Meets Newton
 
 ```{r gruijterprint, echo = FALSE}
 print(hgruijter$results, digits = 10)
 ```
 
-#### Smacof Quickstep
-
-```{r gruijterssmacof, cache = FALSE, eval = FALSE}
-hsgruijter <- exampleRun2(gruijter)
-print(hsgruijter$results, digits = 10)
-```
 ### Discussion
 
 
@@ -1187,18 +1092,11 @@ htrading <- exampleRun(trading)
 
 ### Results
 
-#### Smacof Meets Newton
 
 ```{r tradingprint, echo = FALSE}
 print(htrading$results, digits = 10)
 ```
 
-#### Smacof Quickstep
-
-```{r tradingssmacof, cache = FALSE}
-hstrading <- exampleRun2(trading)
-print(hstrading$results, digits = 10)
-```
 
 ### Discussion
 
@@ -1216,18 +1114,11 @@ hwish <- exampleRun(wish)
 
 ### Results
 
-#### Smacof Meets Newton
 
 ```{r wishprint, echo = FALSE}
 print(hwish$results, digits = 10)
 ```
 
-#### Smacof Quickstep
-
-```{r wishssmacof, cache= FALSE}
-hswish <- exampleRun2(wish)
-print(hswish$results, digits = 10)
-```
 
 ### Discussion
 
@@ -1261,18 +1152,11 @@ The cities are `r row.names(airline)`.
 
 ### Results
 
-#### Smacof Meets Newton
 
 ```{r airlineprint, echo = FALSE}
 print(hairline$results, digits = 10)
 ```
 
-#### Smacof Quickstep
-
-```{r airlinessmacof, cache = FALSE}
-hsairline <- exampleRun2(airline)
-print(hsairline$results, digits = 10)
-```
 
 ### Discussion
 
@@ -1333,19 +1217,9 @@ saddle points.
 ```{r file_auxilary3, code = readLines("derivatives.R")}
 ```
 
-## msmacof.R
+## sNewton.R
 
-```{r file_auxilary4, code = readLines("msmacof.R")}
-```
-
-## vsmacof.R
-
-```{r file_auxilary5, code = readLines("vsmacof.R")}
-```
-
-## ssmacof.R
-
-```{r file_auxilary6, code = readLines("ssmacof.R")}
+```{r file_auxilary4, code = readLines("sNewton.R")}
 ```
 
 ## exampleRun.R

@@ -1,3 +1,3 @@
 # sNewton
 
-a project
+smacof accelerations based on second derivatives
